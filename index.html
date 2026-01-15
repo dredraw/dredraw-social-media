@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dre Draw World - Final</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --sky: #93bbec;
+            --water: #4b69ff;
+            --water-dark: #3a52c9;
+            --grass-light: #48d848;
+            --grass-dark: #00a800;
+            --cliff: #e49150;
+            --cliff-dark: #c06000;
+            --bridge-wood: #8b4513; 
+            --path-beige: #f8d878;
+            --level-yellow: #f8d820;
+            --level-red: #ff4040;
+            
+            /* Logo Colors */
+            --l-red: #ff3333; --l-blue: #3366ff; --l-yellow: #ffcc00; --l-green: #00cc33;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #000; font-family: 'Press Start 2P', cursive; overflow: hidden; width: 100vw; height: 100vh; }
+
+        /* --- CONTÊINER PRINCIPAL --- */
+        #game-stage {
+            width: 100%; height: 100%; position: relative;
+            clip-path: circle(150% at 50% 50%); transition: clip-path 1.5s ease-in-out;
+            background-color: #000;
+        }
+        .stage-closed { clip-path: circle(0% at 50% 50%) !important; }
+
+        /* --- TELA 1: START --- */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--sky); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 10; overflow: hidden;
+        }
+
+        /* Nuvens */
+        .clouds-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+        .cloud { position: absolute; background: rgba(255,255,255,0.85); border-radius: 20px; animation: moveClouds linear infinite; }
+        .cloud::after { content: ''; position: absolute; top: -10px; left: 10px; width: 60%; height: 20px; background: inherit; border-radius: 20px; }
+        
+        .c1 { width: 100px; height: 30px; top: 10%; left: -120px; animation-duration: 35s; }
+        .c2 { width: 80px; height: 25px; top: 25%; left: -100px; animation-duration: 45s; animation-delay: 2s; }
+        .c3 { width: 120px; height: 40px; top: 5%; left: -150px; animation-duration: 28s; animation-delay: 10s; }
+        .c4 { width: 60px; height: 20px; top: 40%; left: -80px; animation-duration: 50s; animation-delay: 5s; opacity: 0.6; }
+        .c5 { width: 90px; height: 30px; top: 15%; left: -200px; animation-duration: 32s; animation-delay: 15s; }
+
+        @keyframes moveClouds { 0% { transform: translateX(-200px); } 100% { transform: translateX(110vw); } }
+
+        .ground-scroll {
+            width: 100%; height: 80px; position: absolute; bottom: 0; left: 0; z-index: 10;
+            background: repeating-linear-gradient(45deg, #e45c10 0, #e45c10 20px, #c63c00 20px, #c63c00 40px); border-top: 15px solid #00d200;
+        }
+        .ground-scroll::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 200%; height: 100%;
+            background: repeating-linear-gradient(90deg, transparent 0, transparent 49px, rgba(0,0,0,0.2) 50px, rgba(0,0,0,0.2) 55px);
+            animation: moveGround 0.8s linear infinite;
+        }
+        @keyframes moveGround { 0% { transform: translateX(0); } 100% { transform: translateX(-55px); } }
+
+        .title-container { position: relative; z-index: 20; display: flex; flex-direction: column; align-items: center; margin-bottom: 120px; transform: scale(1.3); }
+        .logo-row { display: flex; justify-content: center; filter: drop-shadow(6px 6px 0px #000); line-height: 1.2; }
+        .letter { font-size: 50px; -webkit-text-stroke: 2px black; margin: 0 2px; position: relative; }
+        .letter:nth-child(odd) { transform: rotate(-3deg) translateY(2px); }
+        .letter:nth-child(even) { transform: rotate(3deg) translateY(-2px); }
+        .c-red { color: var(--l-red); } .c-blue { color: var(--l-blue); } .c-yellow { color: var(--l-yellow); } .c-green { color: var(--l-green); }
+
+        .menu-box { position: relative; z-index: 20; cursor: pointer; text-align: center; }
+        .menu-text { color: #fff; font-size: 18px; text-shadow: 3px 3px 0 #000; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+        .cursor { font-size: 18px; color: #fff; text-shadow: 2px 2px 0 #000; animation: blink 0.8s steps(2, start) infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .mario-gif { position: absolute; bottom: 75px; left: 20px; height: 300px; width: auto; image-rendering: pixelated; z-index: 15; }
+
+        /* --- TELA 2: MAPA --- */
+        #map-screen {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--water); justify-content: center; align-items: center; z-index: 5;
+            overflow: hidden;
+            background-image: radial-gradient(var(--water-dark) 2px, transparent 2px); background-size: 25px 25px;
+        }
+
+        /* --- CAMADA DOS PEIXES (Separada das Ilhas) --- */
+        /* Isso garante que eles não tenham o fundo marrom */
+        .ocean-layer {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 1; pointer-events: none;
+        }
+
+        /* PEIXES DO OCEANO */
+        .fish {
+            position: absolute; width: 14px; height: 9px; border-radius: 50%;
+        }
+        .fish::after { 
+            content: ''; position: absolute; top: 0; 
+            border-top: 5px solid transparent; border-bottom: 5px solid transparent; 
+        }
+
+        /* CONFIGURAÇÃO DE CADA PEIXE (Totalmente separados) */
+        
+        /* Peixe 1: Vermelho | Nada no TOPO | Direita */
+        .sea-1 { 
+            background: #ff4444; top: 10%; left: -10%; 
+            animation: swimRight 25s linear infinite; animation-delay: -5s; /* Começa já nadando */
+        }
+        .sea-1::after { right: -4px; border-left: 6px solid #ff4444; }
+
+        /* Peixe 2: Amarelo | Nada no MEIO CIMA | Esquerda */
+        .sea-2 { 
+            background: #ffcc00; top: 30%; right: -10%; 
+            animation: swimLeft 18s linear infinite; animation-delay: -10s;
+        }
+        .sea-2::after { left: -4px; border-right: 6px solid #ffcc00; }
+
+        /* Peixe 3: Ciano | Nada no MEIO BAIXO | Direita */
+        .sea-3 { 
+            background: #00ffff; top: 70%; left: -20%; 
+            animation: swimRight 40s linear infinite; animation-delay: -2s;
+        }
+        .sea-3::after { right: -4px; border-left: 6px solid #00ffff; }
+
+        /* Peixe 4: Roxo | Nada no FUNDO | Esquerda */
+        .sea-4 { 
+            background: #ff55ff; top: 90%; right: -20%; 
+            animation: swimLeft 12s linear infinite; animation-delay: -7s;
+        }
+        .sea-4::after { left: -4px; border-right: 6px solid #ff55ff; }
+
+        @keyframes swimRight {
+            0% { left: -50px; transform: scaleX(1); }
+            100% { left: 110vw; transform: scaleX(1); }
+        }
+        @keyframes swimLeft {
+            0% { right: -50px; transform: scaleX(1); }
+            100% { right: 110vw; transform: scaleX(1); }
+        }
+
+        /* --- CAMADA DAS ILHAS (Com Sombra Marrom) --- */
+        .world-wrapper {
+            position: relative; width: 95vw; height: 80vh; max-width: 600px; max-height: 800px;
+            filter: drop-shadow(0px 10px 0px var(--cliff)) drop-shadow(0px 15px 0px var(--cliff-dark));
+            z-index: 10; /* Fica em cima dos peixes */
+        }
+
+        .land-mass { position: absolute; background-color: var(--grass-light); border: 4px solid var(--grass-dark); z-index: 5; }
+
+        /* Ilhas */
+        .island-left {
+            top: 5%; left: 0; width: 42%; height: 50%;
+            border-radius: 40% 60% 30% 70% / 50% 30% 70% 50%;
+        }
+        .island-right {
+            bottom: 5%; right: 0; width: 50%; height: 60%;
+            border-radius: 60% 40% 70% 30% / 40% 70% 30% 60%;
+        }
+
+        /* Ponte */
+        .bridge {
+            position: absolute; top: 48%; left: 35%; width: 35%; height: 35px;
+            background: repeating-linear-gradient(90deg, var(--bridge-wood) 0, var(--bridge-wood) 15px, #5c3c10 15px, #5c3c10 17px);
+            border-top: 3px solid #3e2723; border-bottom: 3px solid #3e2723;
+            transform: rotate(20deg);
+            z-index: 4; 
+            box-shadow: 5px 10px 0 rgba(0,0,0,0.3);
+        }
+        .bridge::after {
+            content: ''; position: absolute; top: 40%; left: 0; width: 100%; height: 20%;
+            background-image: radial-gradient(#3e2723 20%, transparent 20%); background-size: 15px 100%;
+        }
+
+        /* Peixe do Lago */
+        .lake-fish {
+            position: absolute; width: 14px; height: 9px; background: #ff6060; border-radius: 50%; z-index: 1;
+            animation: swimLake 6s linear infinite;
+        }
+        .lake-fish::after { 
+            content: ''; position: absolute; right: -4px; top: 0; 
+            border-left: 6px solid #ff6060; border-top: 5px solid transparent; border-bottom: 5px solid transparent; 
+        }
+        @keyframes swimLake {
+            0% { transform: translateX(0) scaleX(1); }
+            49% { transform: translateX(80px) scaleX(1); }
+            50% { transform: translateX(80px) scaleX(-1); }
+            99% { transform: translateX(0) scaleX(-1); }
+            100% { transform: translateX(0) scaleX(1); }
+        }
+
+        .big-lake {
+            position: absolute; bottom: 20px; right: 20px; width: 130px; height: 90px;
+            background: var(--water); border-radius: 40% 60% 30% 70% / 50% 40% 60% 50%;
+            border: 3px solid var(--grass-dark); box-shadow: inset 5px 5px 0 rgba(0,0,0,0.2); overflow: hidden;
+        }
+
+        /* Detalhes */
+        .hill { position: absolute; background: var(--grass-light); border: 2px solid var(--grass-dark); border-bottom: none; border-radius: 50px 50px 0 0; }
+        .hill::after { content: 'II'; position: absolute; top: 30%; left: 50%; transform: translate(-50%, 0); color: #000; font-size: 10px; font-weight: bold; }
+
+        .forest-cluster { position: absolute; z-index: 6; }
+        .forest-cluster .hill:nth-child(1) { width: 40px; height: 30px; left: 0; bottom: 0; z-index: 1; }
+        .forest-cluster .hill:nth-child(2) { width: 50px; height: 45px; left: 25px; bottom: 0; z-index: 2; }
+        
+        .rock { position: absolute; background: #a0a0a0; border-radius: 40%; border: 2px solid #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.3); z-index: 6; }
+        .rock-lg { width: 25px; height: 20px; }
+        .rock-sm { width: 12px; height: 10px; background: #808080; }
+
+        .flower { position: absolute; width: 6px; height: 6px; border-radius: 50%; z-index: 6; }
+        .fl-red { background: #ff4040; border: 1px solid #000; }
+        .fl-white { background: #fff; border: 1px solid #000; }
+
+        /* Trilha e Botões */
+        .path-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .path-line { stroke: var(--path-beige); stroke-width: 12px; stroke-linecap: round; stroke-linejoin: round; fill: none; filter: drop-shadow(2px 2px 0 rgba(0,0,0,0.2)); stroke-dasharray: 15, 0; }
+
+        .level-node {
+            position: absolute; width: 30px; height: 30px; background: var(--level-yellow);
+            border-radius: 50%; border: 2px solid #000; z-index: 20; cursor: pointer;
+            transition: transform 0.2s; display: flex; justify-content: center; align-items: center;
+            text-decoration: none; box-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+        }
+        .level-node:hover { transform: scale(1.3); background: #fff; }
+        .tooltip { position: absolute; bottom: 35px; background: #000; color: #fff; padding: 4px; font-size: 8px; border: 1px solid #fff; white-space: nowrap; border-radius: 4px; }
+
+        .node-1 { top: 18%; left: 15%; } 
+        .node-2 { top: 42%; left: 25%; background: var(--level-red); }
+        .node-3 { top: 50%; left: 50%; } 
+        .node-4 { top: 55%; left: 80%; background: var(--level-red); } 
+        .node-5 { top: 80%; left: 65%; } 
+
+    </style>
+</head>
+<body>
+
+    <div id="game-stage">
+        
+        <!-- TELA 1 -->
+        <div id="start-screen">
+            <div class="clouds-container">
+                <div class="cloud c1"></div> <div class="cloud c2"></div> <div class="cloud c3"></div> <div class="cloud c4"></div>
+            </div>
+            <div class="title-container">
+                <div class="logo-row"><span class="letter c-red">D</span><span class="letter c-blue">R</span><span class="letter c-yellow">E</span></div>
+                <div class="logo-row"><span class="letter c-green">D</span><span class="letter c-red">R</span><span class="letter c-blue">A</span><span class="letter c-yellow">W</span></div>
+            </div>
+            <div class="menu-box" onclick="startGame()">
+                <div class="menu-text"><span class="cursor">▶</span> 1 PLAYER GAME</div>
+                <div class="menu-text" style="opacity: 0.5; margin-top: 10px; cursor: default;">2 PLAYER GAME</div>
+            </div>
+            <img src="https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/dee38e10-db68-462d-9df7-46b87d4c7876/ddztlt8-d34769a4-8943-471e-b28a-d12d7d1d4d6e.gif?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiIvZi9kZWUzOGUxMC1kYjY4LTQ2MmQtOWRmNy00NmI4N2Q0Yzc4NzYvZGR6dGx0OC1kMzQ3NjlhNC04OTQzLTQ3MWUtYjI4YS1kMTJkN2QxZDRkNmUuZ2lmIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.L_GwdPlqGou2u0fl53s8OMuJxFv8Uquc37OCKNP63O0" alt="Mario" class="mario-gif">
+            <div class="ground-scroll"></div>
+        </div>
+
+        <!-- TELA 2: MAPA -->
+        <div id="map-screen">
+            <!-- Nuvens no Mapa -->
+            <div class="clouds-container" style="z-index: 50; opacity: 0.5;">
+                <div class="cloud c4" style="top: 10%; left: -10%;"></div>
+                <div class="cloud c1" style="top: 50%; animation-delay: 8s;"></div>
+                <div class="cloud c5" style="top: 80%; animation-delay: 0s;"></div>
+            </div>
+
+            <!-- CAMADA DE PEIXES (Soltos no mar, sem sombra marrom) -->
+            <div class="ocean-layer">
+                <div class="fish sea-1"></div> <!-- Vermelho -->
+                <div class="fish sea-2"></div> <!-- Amarelo -->
+                <div class="fish sea-3"></div> <!-- Ciano -->
+                <div class="fish sea-4"></div> <!-- Roxo -->
+            </div>
+
+            <!-- CAMADA DAS ILHAS (Com sombra) -->
+            <div class="world-wrapper">
+
+                <!-- A PONTE -->
+                <div class="bridge"></div>
+
+                <!-- ILHA ESQUERDA -->
+                <div class="land-mass island-left">
+                    <div class="forest-cluster" style="top: -10px; left: 10px;">
+                        <div class="hill"></div> <div class="hill"></div>
+                    </div>
+                    <div class="rock rock-lg" style="bottom: 20%; left: 10%;"></div>
+                    <div class="flower fl-red" style="top: 50%; left: 20%;"></div>
+                </div>
+
+                <!-- ILHA DIREITA -->
+                <div class="land-mass island-right">
+                    <div class="big-lake">
+                        <div class="lake-fish" style="top: 40%; left: 10%;"></div>
+                    </div>
+                    <div class="forest-cluster" style="bottom: 5px; left: 5px;">
+                        <div class="hill"></div> <div class="hill"></div>
+                    </div>
+                    <div class="hill" style="top: -10px; right: 20px; width: 40px; height: 35px;"></div>
+                    <div class="rock rock-lg" style="top: 40%; right: 10%;"></div>
+                    <div class="flower fl-white" style="bottom: 30%; left: 40%;"></div>
+                </div>
+
+                <!-- TRILHO -->
+                <svg class="path-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d="M 18 18 L 28 42 L 53 53 L 83 58 L 68 83" class="path-line"/>
+                </svg>
+
+                <!-- BOTÕES -->
+                <a href="https://www.instagram.com/dre_draw_/" target="_blank" class="level-node node-1"><div class="tooltip">INSTAGRAM</div></a>
+                <a href="https://x.com/dreS2_2" class="level-node node-2"><div class="tooltip">TWITTER</div></a>
+                <a href="https://www.youtube.com/channel/UCZFywLQIu6ugukdIaDVetjg" class="level-node node-3"><div class="tooltip">YOUTUBE</div></a>
+                <a href="https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox?compose=CllgCJftMJXrFhpHBSqQLmkfQntMfwQQmvxncMWDGNlhXdvtBcnZFSfHrmrWNWXXtkvDrHrsbVV" target="_blank" class="level-node node-4"><div class="tooltip">EMAIL</div></a>
+                <a href="https://www.tiktok.com/@kadudre"_blank" class="level-node node-5"><div class="tooltip">TIKTOK</div></a>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function startGame() {
+            const stage = document.getElementById('game-stage');
+            const startScreen = document.getElementById('start-screen');
+            const mapScreen = document.getElementById('map-screen');
+
+            stage.classList.add('stage-closed');
+
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+                mapScreen.style.display = 'flex';
+
+                setTimeout(() => {
+                    stage.classList.remove('stage-closed');
+                }, 100);
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
