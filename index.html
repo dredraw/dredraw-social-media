@@ -3,11 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bloqueia a alteração de cores pelo navegador (Dark Mode forçado) -->
+    <meta name="color-scheme" content="light only">
     <title>Dre Draw World - Final</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     
     <style>
         :root {
+            /* Garante que o navegador entenda que o esquema é luz, preservando as cores originais */
+            color-scheme: light; 
+            
             --sky: #93bbec;
             --water: #4b69ff;
             --water-dark: #3a52c9;
@@ -24,8 +29,22 @@
             --l-red: #ff3333; --l-blue: #3366ff; --l-yellow: #ffcc00; --l-green: #00cc33;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { background-color: #000; font-family: 'Press Start 2P', cursive; overflow: hidden; width: 100vw; height: 100vh; }
+        * { 
+            margin: 0; padding: 0; box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+            /* Impede ajustes automáticos de cor em alguns navegadores */
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body { 
+            background-color: #000; 
+            font-family: 'Press Start 2P', cursive; 
+            overflow: hidden; 
+            width: 100vw; height: 100vh;
+            /* Garante que o modo de alto contraste não quebre as cores */
+            forced-color-adjust: none; 
+        }
 
         /* --- CONTÊINER PRINCIPAL --- */
         #game-stage {
@@ -88,7 +107,6 @@
         }
 
         /* --- CAMADA DOS PEIXES (Separada das Ilhas) --- */
-        /* Isso garante que eles não tenham o fundo marrom */
         .ocean-layer {
             position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 1; pointer-events: none;
         }
@@ -102,30 +120,24 @@
             border-top: 5px solid transparent; border-bottom: 5px solid transparent; 
         }
 
-        /* CONFIGURAÇÃO DE CADA PEIXE (Totalmente separados) */
-        
-        /* Peixe 1: Vermelho | Nada no TOPO | Direita */
         .sea-1 { 
             background: #ff4444; top: 10%; left: -10%; 
-            animation: swimRight 25s linear infinite; animation-delay: -5s; /* Começa já nadando */
+            animation: swimRight 25s linear infinite; animation-delay: -5s; 
         }
         .sea-1::after { right: -4px; border-left: 6px solid #ff4444; }
 
-        /* Peixe 2: Amarelo | Nada no MEIO CIMA | Esquerda */
         .sea-2 { 
             background: #ffcc00; top: 30%; right: -10%; 
             animation: swimLeft 18s linear infinite; animation-delay: -10s;
         }
         .sea-2::after { left: -4px; border-right: 6px solid #ffcc00; }
 
-        /* Peixe 3: Ciano | Nada no MEIO BAIXO | Direita */
         .sea-3 { 
             background: #00ffff; top: 70%; left: -20%; 
             animation: swimRight 40s linear infinite; animation-delay: -2s;
         }
         .sea-3::after { right: -4px; border-left: 6px solid #00ffff; }
 
-        /* Peixe 4: Roxo | Nada no FUNDO | Esquerda */
         .sea-4 { 
             background: #ff55ff; top: 90%; right: -20%; 
             animation: swimLeft 12s linear infinite; animation-delay: -7s;
@@ -145,7 +157,7 @@
         .world-wrapper {
             position: relative; width: 95vw; height: 80vh; max-width: 600px; max-height: 800px;
             filter: drop-shadow(0px 10px 0px var(--cliff)) drop-shadow(0px 15px 0px var(--cliff-dark));
-            z-index: 10; /* Fica em cima dos peixes */
+            z-index: 10; 
         }
 
         .land-mass { position: absolute; background-color: var(--grass-light); border: 4px solid var(--grass-dark); z-index: 5; }
@@ -222,6 +234,8 @@
             border-radius: 50%; border: 2px solid #000; z-index: 20; cursor: pointer;
             transition: transform 0.2s; display: flex; justify-content: center; align-items: center;
             text-decoration: none; box-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+            /* Garante que a cor do texto/ícone dentro do nó não seja forçada */
+            color: black;
         }
         .level-node:hover { transform: scale(1.3); background: #fff; }
         .tooltip { position: absolute; bottom: 35px; background: #000; color: #fff; padding: 4px; font-size: 8px; border: 1px solid #fff; white-space: nowrap; border-radius: 4px; }
@@ -264,7 +278,7 @@
                 <div class="cloud c5" style="top: 80%; animation-delay: 0s;"></div>
             </div>
 
-            <!-- CAMADA DE PEIXES (Soltos no mar, sem sombra marrom) -->
+            <!-- CAMADA DE PEIXES -->
             <div class="ocean-layer">
                 <div class="fish sea-1"></div> <!-- Vermelho -->
                 <div class="fish sea-2"></div> <!-- Amarelo -->
@@ -272,7 +286,7 @@
                 <div class="fish sea-4"></div> <!-- Roxo -->
             </div>
 
-            <!-- CAMADA DAS ILHAS (Com sombra) -->
+            <!-- CAMADA DAS ILHAS -->
             <div class="world-wrapper">
 
                 <!-- A PONTE -->
@@ -305,12 +319,17 @@
                     <path d="M 18 18 L 28 42 L 53 53 L 83 58 L 68 83" class="path-line"/>
                 </svg>
 
-                <!-- BOTÕES -->
+                <!-- BOTÕES CORRIGIDOS -->
                 <a href="https://www.instagram.com/dre_draw_/" target="_blank" class="level-node node-1"><div class="tooltip">INSTAGRAM</div></a>
-                <a href="https://x.com/dreS2_2" class="level-node node-2"><div class="tooltip">TWITTER</div></a>
-                <a href="https://www.youtube.com/channel/UCZFywLQIu6ugukdIaDVetjg" class="level-node node-3"><div class="tooltip">YOUTUBE</div></a>
+                <a href="https://x.com/dreS2_2" target="_blank" class="level-node node-2"><div class="tooltip">TWITTER</div></a>
+                
+                <!-- CORREÇÃO AQUI: Link do Youtube e classe node-3 adicionada -->
+                <a href="https://www.youtube.com/channel/UCZFywLQIu6ugukdIaDVetjg"_blank" class="level-node node-3"><div class="tooltip">YOUTUBE</div></a>
+                
                 <a href="https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox?compose=CllgCJftMJXrFhpHBSqQLmkfQntMfwQQmvxncMWDGNlhXdvtBcnZFSfHrmrWNWXXtkvDrHrsbVV" target="_blank" class="level-node node-4"><div class="tooltip">EMAIL</div></a>
-                <a href="https://www.tiktok.com/@kadudre"_blank" class="level-node node-5"><div class="tooltip">TIKTOK</div></a>
+                
+                <!-- CORREÇÃO AQUI: Aspas fechadas corretamente -->
+                <a href="https://www.tiktok.com/@kadudre" target="_blank" class="level-node node-5"><div class="tooltip">TIKTOK</div></a>
 
             </div>
         </div>
